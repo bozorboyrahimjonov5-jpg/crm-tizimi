@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRM — Mijozlar Boshqaruvi</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #0f1117;
+    --bg2: #161b27;
+    --bg3: #1e2535;
+    --border: #2a3347;
+    --accent: #3d8ef0;
+    --accent2: #5ba3ff;
+    --green: #22c55e;
+    --red: #ef4444;
+    --yellow: #f59e0b;
+    --text: #e2e8f0;
+    --text2: #94a3b8;
+    --text3: #64748b;
+    --radius: 10px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.4);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'IBM Plex Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* ===== LOGIN ===== */
+  #login-screen {
+    position: fixed; inset: 0; background: var(--bg);
+    display: flex; align-items: center; justify-content: center; z-index: 9999;
+  }
+  .login-box {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 16px; padding: 48px 40px; width: 380px;
+    box-shadow: 0 0 60px rgba(61,142,240,0.1);
+  }
+  .login-logo { text-align: center; margin-bottom: 32px; }
+  .login-logo .icon { width: 60px; height: 60px; background: linear-gradient(135deg, var(--accent), #6c63ff);
+    border-radius: 14px; display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 14px; font-size: 26px; }
+  .login-logo h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+  .login-logo p { color: var(--text2); font-size: 13px; margin-top: 4px; }
+  .login-field { margin-bottom: 14px; }
+  .login-field label { display: block; font-size: 12px; color: var(--text2); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .login-field input {
+    width: 100%; padding: 12px 14px; background: var(--bg3);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    color: var(--text); font-size: 15px; font-family: 'IBM Plex Mono', monospace;
+    outline: none; transition: border-color 0.2s;
+  }
+  .login-field input:focus { border-color: var(--accent); }
+  .login-error { color: var(--red); font-size: 13px; margin-bottom: 12px; display: none; }
+  .login-error.show { display: block; }
+  .btn-login {
+    width: 100%; padding: 13px; background: var(--accent);
+    border: none; border-radius: var(--radius); color: #fff;
+    font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s;
+    font-family: 'IBM Plex Sans', sans-serif;
+  }
+  .btn-login:hover { background: var(--accent2); }
+
+  /* ===== LAYOUT ===== */
+  #app { display: flex; min-height: 100vh; }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 220px; background: var(--bg2); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; position: fixed; top: 0; left: 0; height: 100vh;
+  }
+  .sidebar-logo { padding: 20px 18px 16px; border-bottom: 1px solid var(--border); }
+  .sidebar-logo span { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; }
+  .sidebar-logo span b { color: var(--accent); }
+  .sidebar-nav { flex: 1; padding: 10px 10px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+    border-radius: 8px; cursor: pointer; color: var(--text2); font-size: 14px;
+    transition: all 0.15s; margin-bottom: 2px;
+  }
+  .nav-item:hover { background: var(--bg3); color: var(--text); }
+  .nav-item.active { background: rgba(61,142,240,0.15); color: var(--accent); }
+  .nav-item i { width: 18px; text-align: center; font-size: 14px; }
+  .sidebar-footer { padding: 12px 10px; border-top: 1px solid var(--border); }
+  .btn-logout {
+    width: 100%; padding: 10px; background: transparent; border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text2); font-size: 13px; cursor: pointer;
+    display: flex; align-items: center; gap: 8px; justify-content: center;
+    transition: all 0.15s; font-family: 'IBM Plex Sans', sans-serif;
+  }
+  .btn-logout:hover { border-color: var(--red); color: var(--red); }
+
+  /* MAIN */
+  .main { margin-left: 220px; flex: 1; padding: 28px; }
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* HEADER */
+  .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+  .page-header h2 { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+  .page-header p { color: var(--text2); font-size: 13px; margin-top: 2px; }
+
+  /* STATS */
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+  .stat-card {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 18px 20px; transition: border-color 0.2s;
+  }
+  .stat-card:hover { border-color: var(--accent); }
+  .stat-label { font-size: 12px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat-value { font-size: 28px; font-weight: 700; margin: 6px 0 2px; font-family: 'IBM Plex Mono'; }
+  .stat-sub { font-size: 12px; color: var(--green); }
+
+  /* BUTTONS */
+  .btn {
+    padding: 9px 16px; border-radius: 8px; font-size: 13px; font-weight: 500;
+    cursor: pointer; border: none; transition: all 0.15s; display: inline-flex;
+    align-items: center; gap: 7px; font-family: 'IBM Plex Sans', sans-serif;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent2); }
+  .btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-danger { background: transparent; color: var(--red); border: 1px solid transparent; }
+  .btn-danger:hover { background: rgba(239,68,68,0.1); }
+  .btn-sm { padding: 6px 11px; font-size: 12px; }
+
+  /* TABLE */
+  .table-wrap { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .table-toolbar { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; gap: 10px; align-items: center; }
+  .search-box {
+    flex: 1; max-width: 280px; position: relative;
+  }
+  .search-box i { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--text3); font-size: 13px; }
+  .search-box input {
+    width: 100%; padding: 8px 12px 8px 32px; background: var(--bg3);
+    border: 1px solid var(--border); border-radius: 7px; color: var(--text);
+    font-size: 13px; outline: none; transition: border-color 0.2s;
+    font-family: 'IBM Plex Sans', sans-serif;
+  }
+  .search-box input:focus { border-color: var(--accent); }
+
+  table { width: 100%; border-collapse: collapse; }
+  thead th { padding: 11px 16px; text-align: left; font-size: 11px; font-weight: 600;
+    color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border); }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: rgba(255,255,255,0.02); }
+  tbody td { padding: 12px 16px; font-size: 13px; }
+
+  .badge {
+    padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 500;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .badge-green { background: rgba(34,197,94,0.15); color: var(--green); }
+  .badge-yellow { background: rgba(245,158,11,0.15); color: var(--yellow); }
+  .badge-red { background: rgba(239,68,68,0.15); color: var(--red); }
+  .badge-blue { background: rgba(61,142,240,0.15); color: var(--accent2); }
+
+  .avatar {
+    width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), #6c63ff);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 600; color: #fff; flex-shrink: 0;
+  }
+  .td-name { display: flex; align-items: center; gap: 10px; }
+  .td-name .name { font-weight: 500; }
+  .td-name .phone { font-size: 11px; color: var(--text3); font-family: 'IBM Plex Mono'; }
+
+  .izoh-preview { max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text2); font-style: italic; font-size: 12px; }
+  .izoh-empty { color: var(--text3); font-size: 12px; }
+
+  /* MODAL */
+  .modal-bg {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+    z-index: 1000; display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none; transition: opacity 0.2s;
+  }
+  .modal-bg.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: 14px;
+    width: 480px; max-width: 95vw; box-shadow: var(--shadow);
+    transform: scale(0.96); transition: transform 0.2s;
+  }
+  .modal-bg.open .modal { transform: scale(1); }
+  .modal-header { padding: 18px 22px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .modal-header h3 { font-size: 16px; font-weight: 600; }
+  .modal-close { background: none; border: none; color: var(--text3); font-size: 18px; cursor: pointer; padding: 2px 6px; }
+  .modal-close:hover { color: var(--text); }
+  .modal-body { padding: 20px 22px; }
+  .modal-footer { padding: 14px 22px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-group { margin-bottom: 14px; }
+  .form-group label { display: block; font-size: 12px; color: var(--text2); margin-bottom: 6px; font-weight: 500; }
+  .form-group input, .form-group select, .form-group textarea {
+    width: 100%; padding: 10px 12px; background: var(--bg3);
+    border: 1px solid var(--border); border-radius: 8px; color: var(--text);
+    font-size: 13px; outline: none; transition: border-color 0.2s;
+    font-family: 'IBM Plex Sans', sans-serif;
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--accent); }
+  .form-group textarea { resize: vertical; min-height: 80px; }
+  .form-group select option { background: var(--bg3); }
+
+  /* IZOH MODAL */
+  .izoh-modal .modal { width: 440px; }
+  .izoh-list { max-height: 240px; overflow-y: auto; margin-bottom: 14px; }
+  .izoh-item {
+    background: var(--bg3); border-radius: 8px; padding: 12px 14px; margin-bottom: 8px;
+    border-left: 3px solid var(--accent);
+  }
+  .izoh-item .izoh-text { font-size: 13px; line-height: 1.5; }
+  .izoh-item .izoh-meta { font-size: 11px; color: var(--text3); margin-top: 6px; font-family: 'IBM Plex Mono'; }
+  .izoh-empty-state { text-align: center; padding: 24px; color: var(--text3); font-size: 13px; }
+
+  /* TOAST */
+  #toast {
+    position: fixed; bottom: 24px; right: 24px; background: var(--bg2);
+    border: 1px solid var(--border); border-radius: 10px; padding: 12px 18px;
+    display: flex; align-items: center; gap: 10px; font-size: 13px;
+    box-shadow: var(--shadow); transform: translateY(80px); opacity: 0;
+    transition: all 0.3s; z-index: 9000;
+  }
+  #toast.show { transform: translateY(0); opacity: 1; }
+
+  /* EMPTY */
+  .empty-state { text-align: center; padding: 48px 24px; color: var(--text3); }
+  .empty-state i { font-size: 36px; margin-bottom: 12px; opacity: 0.4; }
+  .empty-state p { font-size: 14px; }
+
+  /* CONFIRM */
+  .confirm-modal .modal { width: 360px; }
+  .confirm-modal .modal-body { text-align: center; padding: 28px 22px; }
+  .confirm-modal .modal-body i { font-size: 32px; color: var(--red); margin-bottom: 12px; }
+  .confirm-modal .modal-body p { font-size: 14px; color: var(--text2); }
+
+  /* SETTINGS */
+  .settings-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; margin-bottom: 16px; }
+  .settings-card h3 { font-size: 15px; font-weight: 600; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- ===== LOGIN ===== -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="icon">📊</div>
+      <h1>CRM Tizimi</h1>
+      <p>Mijozlar boshqaruv tizimi</p>
+    </div>
+    <div class="login-field">
+      <label>Foydalanuvchi nomi</label>
+      <input type="text" id="login-user" placeholder="admin" autocomplete="off">
+    </div>
+    <div class="login-field">
+      <label>Parol</label>
+      <input type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter') checkLogin()">
+    </div>
+    <div class="login-error" id="login-error">❌ Login yoki parol noto'g'ri!</div>
+    <button class="btn-login" onclick="checkLogin()">Kirish →</button>
+  </div>
+</div>
+
+<!-- ===== APP ===== -->
+<div id="app" style="display:none">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <span>📊 <b>CRM</b> Tizimi</span>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-item active" onclick="showPage('dashboard')">
+        <i class="fas fa-chart-pie"></i> Dashboard
+      </div>
+      <div class="nav-item" onclick="showPage('mijozlar')">
+        <i class="fas fa-users"></i> Mijozlar
+      </div>
+      <div class="nav-item" onclick="showPage('sozlamalar')">
+        <i class="fas fa-cog"></i> Sozlamalar
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="btn-logout" onclick="logout()">
+        <i class="fas fa-sign-out-alt"></i> Chiqish
+      </button>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-header">
+        <div>
+          <h2>Dashboard</h2>
+          <p>Umumiy ko'rinish</p>
+        </div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Jami mijozlar</div>
+          <div class="stat-value" id="stat-jami">0</div>
+          <div class="stat-sub">Ro'yxatda</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Faol</div>
+          <div class="stat-value" id="stat-faol" style="color:var(--green)">0</div>
+          <div class="stat-sub">Aktiv mijozlar</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Kutilmoqda</div>
+          <div class="stat-value" id="stat-kutilmoqda" style="color:var(--yellow)">0</div>
+          <div class="stat-sub">Jarayonda</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Izohlar</div>
+          <div class="stat-value" id="stat-izoh" style="color:var(--accent)">0</div>
+          <div class="stat-sub">Yozilgan izoh</div>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <div style="padding:14px 18px; border-bottom:1px solid var(--border); font-size:14px; font-weight:600;">So'nggi mijozlar</div>
+        <table>
+          <thead><tr>
+            <th>Mijoz</th><th>Holat</th><th>Izoh</th><th>Sana</th>
+          </tr></thead>
+          <tbody id="last-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- MIJOZLAR -->
+    <div class="page" id="page-mijozlar">
+      <div class="page-header">
+        <div>
+          <h2>Mijozlar</h2>
+          <p id="mijoz-count-text">0 ta mijoz</p>
+        </div>
+        <button class="btn btn-primary" onclick="openModal()">
+          <i class="fas fa-plus"></i> Yangi mijoz
+        </button>
+      </div>
+      <div class="table-wrap">
+        <div class="table-toolbar">
+          <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" id="search-input" placeholder="Qidirish..." oninput="renderTable()">
+          </div>
+          <select onchange="renderTable()" id="filter-holat" style="padding:8px 12px; background:var(--bg3); border:1px solid var(--border); border-radius:7px; color:var(--text); font-size:13px; outline:none; font-family:'IBM Plex Sans',sans-serif;">
+            <option value="">Barchasi</option>
+            <option value="Faol">Faol</option>
+            <option value="Kutilmoqda">Kutilmoqda</option>
+            <option value="Nofaol">Nofaol</option>
+          </select>
+        </div>
+        <table>
+          <thead><tr>
+            <th>Mijoz</th><th>Mahsulot/Xizmat</th><th>Holat</th><th>Izoh</th><th>Sana</th><th>Amallar</th>
+          </tr></thead>
+          <tbody id="main-tbody"></tbody>
+        </table>
+        <div id="empty-state" class="empty-state" style="display:none">
+          <i class="fas fa-users"></i>
+          <p>Mijoz topilmadi</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SOZLAMALAR -->
+    <div class="page" id="page-sozlamalar">
+      <div class="page-header">
+        <div><h2>Sozlamalar</h2><p>Tizim sozlamalari</p></div>
+      </div>
+      <div class="settings-card">
+        <h3>🔐 Parolni o'zgartirish</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Yangi parol</label>
+            <input type="password" id="new-pass1" placeholder="Yangi parol">
+          </div>
+          <div class="form-group">
+            <label>Parolni tasdiqlang</label>
+            <input type="password" id="new-pass2" placeholder="Takrorlang">
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="parolOzgartir()">Saqlash</button>
+      </div>
+      <div class="settings-card">
+        <h3>👤 Foydalanuvchi nomi</h3>
+        <div class="form-group" style="max-width:260px; margin-bottom:14px;">
+          <label>Nom</label>
+          <input type="text" id="new-username" placeholder="admin">
+        </div>
+        <button class="btn btn-primary" onclick="usernameSaqla()">Saqlash</button>
+      </div>
+      <div class="settings-card">
+        <h3>🗑️ Ma'lumotlarni tozalash</h3>
+        <p style="color:var(--text2); font-size:13px; margin-bottom:14px;">Barcha mijozlar va izohlarni o'chirish</p>
+        <button class="btn btn-danger" onclick="if(confirm('Hamma narsani o\'chirasizmi?')){localStorage.removeItem('crm_mijozlar');localStorage.removeItem('crm_izohlar');showToast('Tozalandi!');renderTable();updateDashboard();}">
+          <i class="fas fa-trash"></i> Hammasini o'chirish
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MIJOZ QO'SHISH / TAHRIRLASH MODAL ===== -->
+<div class="modal-bg" id="modal-bg" onclick="bgClose(event,'modal-bg')">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-title">Yangi mijoz</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-id">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Ism *</label>
+          <input type="text" id="f-ism" placeholder="Ism">
+        </div>
+        <div class="form-group">
+          <label>Familiya</label>
+          <input type="text" id="f-familiya" placeholder="Familiya">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Telefon</label>
+          <input type="text" id="f-telefon" placeholder="+998 90 000 00 00">
+        </div>
+        <div class="form-group">
+          <label>Holat</label>
+          <select id="f-holat">
+            <option>Faol</option>
+            <option>Kutilmoqda</option>
+            <option>Nofaol</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Mahsulot / Xizmat</label>
+        <input type="text" id="f-mahsulot" placeholder="Nima sotib oldi yoki qaysi xizmatdan foydalanmoqda">
+      </div>
+      <div class="form-group">
+        <label>📝 Izoh</label>
+        <textarea id="f-izoh" rows="3" placeholder="Mijoz haqida qo'shimcha izoh, eslatma yoki muhim ma'lumot..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Bekor</button>
+      <button class="btn btn-primary" onclick="saveMijoz()"><i class="fas fa-save"></i> Saqlash</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== IZOH MODAL ===== -->
+<div class="modal-bg izoh-modal" id="izoh-modal-bg" onclick="bgClose(event,'izoh-modal-bg')">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="izoh-modal-title">Izohlar</h3>
+      <button class="modal-close" onclick="closeIzohModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="izoh-list" id="izoh-list"></div>
+      <div class="form-group" style="margin-bottom:0">
+        <label>Yangi izoh qo'shish</label>
+        <textarea id="izoh-yangi" rows="3" placeholder="Yangi izoh yozing..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeIzohModal()">Yopish</button>
+      <button class="btn btn-primary" onclick="izohQosh()"><i class="fas fa-comment"></i> Izoh qo'sh</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== O'CHIRISH CONFIRM ===== -->
+<div class="modal-bg confirm-modal" id="confirm-modal-bg">
+  <div class="modal">
+    <div class="modal-body">
+      <i class="fas fa-trash-alt"></i>
+      <h3 style="margin-bottom:8px">O'chirilsinmi?</h3>
+      <p>Bu mijoz butunlay o'chiriladi.</p>
+    </div>
+    <div class="modal-footer" style="justify-content:center; gap:12px;">
+      <button class="btn btn-ghost" onclick="closeConfirm()">Bekor</button>
+      <button class="btn btn-primary" style="background:var(--red)" onclick="confirmDelete()">O'chirish</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"><i id="toast-icon"></i> <span id="toast-msg"></span></div>
+
+<script>
+// ===== CONFIG =====
+const DEFAULT_USER = 'admin';
+const DEFAULT_PASS = 'admin123';
+
+// ===== AUTH =====
+function checkLogin() {
+  var u = document.getElementById('login-user').value.trim();
+  var p = document.getElementById('login-pass').value;
+  var savedUser = localStorage.getItem('crm_username') || DEFAULT_USER;
+  var savedPass = localStorage.getItem('crm_password') || DEFAULT_PASS;
+  if (u === savedUser && p === savedPass) {
+    localStorage.setItem('crm_auth', '1');
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    document.getElementById('login-error').classList.remove('show');
+    renderTable(); updateDashboard();
+  } else {
+    document.getElementById('login-error').classList.add('show');
+    document.getElementById('login-pass').value = '';
+  }
+}
+
+function logout() {
+  localStorage.removeItem('crm_auth');
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('login-pass').value = '';
+  document.getElementById('login-user').value = '';
+}
+
+function parolOzgartir() {
+  var p1 = document.getElementById('new-pass1').value;
+  var p2 = document.getElementById('new-pass2').value;
+  if (!p1) return showToast('Parol bo\'sh bo\'lmaydi!', true);
+  if (p1 !== p2) return showToast('Parollar mos emas!', true);
+  localStorage.setItem('crm_password', p1);
+  document.getElementById('new-pass1').value = '';
+  document.getElementById('new-pass2').value = '';
+  showToast('Parol saqlandi ✓');
+}
+
+function usernameSaqla() {
+  var u = document.getElementById('new-username').value.trim();
+  if (!u) return showToast('Ism bo\'sh bo\'lmaydi!', true);
+  localStorage.setItem('crm_username', u);
+  showToast('Foydalanuvchi nomi saqlandi ✓');
+}
+
+// ===== NAVIGATION =====
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  event.currentTarget.classList.add('active');
+  if (id === 'dashboard') updateDashboard();
+}
+
+// ===== DATA =====
+function getMijozlar() { return JSON.parse(localStorage.getItem('crm_mijozlar') || '[]'); }
+function saveMijozlar(d) { localStorage.setItem('crm_mijozlar', JSON.stringify(d)); }
+function getIzohlar() { return JSON.parse(localStorage.getItem('crm_izohlar') || '{}'); }
+function saveIzohlar(d) { localStorage.setItem('crm_izohlar', JSON.stringify(d)); }
+
+// ===== MODAL =====
+var editingId = null;
+function openModal(id) {
+  editingId = id || null;
+  document.getElementById('modal-title').textContent = id ? 'Tahrirlash' : 'Yangi mijoz';
+  ['f-ism','f-familiya','f-telefon','f-mahsulot','f-izoh'].forEach(i => document.getElementById(i).value = '');
+  document.getElementById('f-holat').value = 'Faol';
+  if (id) {
+    var m = getMijozlar().find(x => x.id === id);
+    if (m) {
+      document.getElementById('f-ism').value = m.ism || '';
+      document.getElementById('f-familiya').value = m.familiya || '';
+      document.getElementById('f-telefon').value = m.telefon || '';
+      document.getElementById('f-mahsulot').value = m.mahsulot || '';
+      document.getElementById('f-holat').value = m.holat || 'Faol';
+      // Load latest izoh as default
+      var izohlar = getIzohlar()[id] || [];
+      if (izohlar.length) document.getElementById('f-izoh').value = izohlar[izohlar.length-1].matn;
+    }
+  }
+  document.getElementById('modal-bg').classList.add('open');
+}
+function closeModal() { document.getElementById('modal-bg').classList.remove('open'); }
+
+function saveMijoz() {
+  var ism = document.getElementById('f-ism').value.trim();
+  if (!ism) return showToast('Ism kiritilishi shart!', true);
+  var mijozlar = getMijozlar();
+  var izohMatn = document.getElementById('f-izoh').value.trim();
+  if (editingId) {
+    var idx = mijozlar.findIndex(x => x.id === editingId);
+    if (idx >= 0) {
+      mijozlar[idx].ism = ism;
+      mijozlar[idx].familiya = document.getElementById('f-familiya').value.trim();
+      mijozlar[idx].telefon = document.getElementById('f-telefon').value.trim();
+      mijozlar[idx].mahsulot = document.getElementById('f-mahsulot').value.trim();
+      mijozlar[idx].holat = document.getElementById('f-holat').value;
+    }
+  } else {
+    var id = 'M' + Date.now();
+    mijozlar.push({
+      id, ism,
+      familiya: document.getElementById('f-familiya').value.trim(),
+      telefon: document.getElementById('f-telefon').value.trim(),
+      mahsulot: document.getElementById('f-mahsulot').value.trim(),
+      holat: document.getElementById('f-holat').value,
+      sana: new Date().toLocaleDateString('uz-UZ')
+    });
+    editingId = id;
+  }
+  // Izoh qo'shish
+  if (izohMatn) {
+    var izohlar = getIzohlar();
+    if (!izohlar[editingId]) izohlar[editingId] = [];
+    izohlar[editingId].push({ matn: izohMatn, sana: new Date().toLocaleString('uz-UZ') });
+    saveIzohlar(izohlar);
+  }
+  saveMijozlar(mijozlar);
+  closeModal();
+  renderTable();
+  updateDashboard();
+  showToast(editingId ? 'Saqlandi ✓' : 'Mijoz qo\'shildi ✓');
+}
+
+// ===== IZOH MODAL =====
+var izohMijozId = null;
+function openIzohModal(id, ism) {
+  izohMijozId = id;
+  document.getElementById('izoh-modal-title').textContent = '💬 ' + ism + ' — Izohlar';
+  document.getElementById('izoh-yangi').value = '';
+  renderIzohList();
+  document.getElementById('izoh-modal-bg').classList.add('open');
+}
+function closeIzohModal() { document.getElementById('izoh-modal-bg').classList.remove('open'); }
+
+function renderIzohList() {
+  var izohlar = getIzohlar()[izohMijozId] || [];
+  var el = document.getElementById('izoh-list');
+  if (!izohlar.length) {
+    el.innerHTML = '<div class="izoh-empty-state"><i class="fas fa-comment-slash" style="font-size:24px;margin-bottom:8px;opacity:0.3;display:block"></i>Hali izoh yo\'q</div>';
+    return;
+  }
+  el.innerHTML = izohlar.map((iz, i) => `
+    <div class="izoh-item">
+      <div class="izoh-text">${escHtml(iz.matn)}</div>
+      <div class="izoh-meta">${iz.sana} &nbsp; <span onclick="izohOchir(${i})" style="cursor:pointer;color:var(--red)">o'chirish</span></div>
+    </div>
+  `).join('');
+}
+
+function izohQosh() {
+  var matn = document.getElementById('izoh-yangi').value.trim();
+  if (!matn) return showToast('Izoh bo\'sh bo\'lmaydi!', true);
+  var izohlar = getIzohlar();
+  if (!izohlar[izohMijozId]) izohlar[izohMijozId] = [];
+  izohlar[izohMijozId].push({ matn, sana: new Date().toLocaleString('uz-UZ') });
+  saveIzohlar(izohlar);
+  document.getElementById('izoh-yangi').value = '';
+  renderIzohList();
+  renderTable();
+  updateDashboard();
+  showToast('Izoh qo\'shildi ✓');
+}
+
+function izohOchir(idx) {
+  var izohlar = getIzohlar();
+  izohlar[izohMijozId].splice(idx, 1);
+  saveIzohlar(izohlar);
+  renderIzohList();
+  renderTable();
+  updateDashboard();
+}
+
+// ===== DELETE =====
+var deleteId = null;
+function openConfirm(id) { deleteId = id; document.getElementById('confirm-modal-bg').classList.add('open'); }
+function closeConfirm() { document.getElementById('confirm-modal-bg').classList.remove('open'); deleteId = null; }
+function confirmDelete() {
+  var mijozlar = getMijozlar().filter(x => x.id !== deleteId);
+  saveMijozlar(mijozlar);
+  var iz = getIzohlar(); delete iz[deleteId]; saveIzohlar(iz);
+  closeConfirm(); renderTable(); updateDashboard();
+  showToast('O\'chirildi');
+}
+
+// ===== TABLE =====
+function renderTable() {
+  var q = document.getElementById('search-input').value.toLowerCase();
+  var h = document.getElementById('filter-holat').value;
+  var mijozlar = getMijozlar().filter(m => {
+    var mos = (m.ism + ' ' + m.familiya + ' ' + m.telefon).toLowerCase().includes(q);
+    return mos && (!h || m.holat === h);
+  });
+  var izohlar = getIzohlar();
+  document.getElementById('mijoz-count-text').textContent = mijozlar.length + ' ta mijoz';
+  var tbody = document.getElementById('main-tbody');
+  if (!mijozlar.length) {
+    tbody.innerHTML = '';
+    document.getElementById('empty-state').style.display = 'block';
+    return;
+  }
+  document.getElementById('empty-state').style.display = 'none';
+  tbody.innerHTML = mijozlar.map(m => {
+    var iz = izohlar[m.id] || [];
+    var lastIz = iz.length ? iz[iz.length-1].matn : null;
+    return `<tr>
+      <td><div class="td-name">
+        <div class="avatar">${(m.ism||'?')[0].toUpperCase()}</div>
+        <div><div class="name">${escHtml(m.ism)} ${escHtml(m.familiya||'')}</div>
+        <div class="phone">${m.telefon||'—'}</div></div>
+      </div></td>
+      <td style="color:var(--text2);font-size:13px">${escHtml(m.mahsulot||'—')}</td>
+      <td>${badgeHtml(m.holat)}</td>
+      <td>
+        ${lastIz ? `<span class="izoh-preview" title="${escHtml(lastIz)}">${escHtml(lastIz)}</span>` : '<span class="izoh-empty">Izoh yo\'q</span>'}
+        <button class="btn btn-ghost btn-sm" style="margin-top:4px" onclick="openIzohModal('${m.id}','${escHtml(m.ism)}')">
+          <i class="fas fa-comment"></i> ${iz.length ? iz.length + ' ta' : 'Qo\'sh'}
+        </button>
+      </td>
+      <td style="color:var(--text3);font-size:12px;font-family:'IBM Plex Mono'">${m.sana||'—'}</td>
+      <td>
+        <button class="btn btn-ghost btn-sm" onclick="openModal('${m.id}')"><i class="fas fa-edit"></i></button>
+        <button class="btn btn-danger btn-sm" onclick="openConfirm('${m.id}')"><i class="fas fa-trash"></i></button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function updateDashboard() {
+  var mijozlar = getMijozlar();
+  var izohlar = getIzohlar();
+  var izohCount = Object.values(izohlar).reduce((s, a) => s + a.length, 0);
+  document.getElementById('stat-jami').textContent = mijozlar.length;
+  document.getElementById('stat-faol').textContent = mijozlar.filter(m => m.holat === 'Faol').length;
+  document.getElementById('stat-kutilmoqda').textContent = mijozlar.filter(m => m.holat === 'Kutilmoqda').length;
+  document.getElementById('stat-izoh').textContent = izohCount;
+  var last = [...mijozlar].reverse().slice(0, 5);
+  document.getElementById('last-tbody').innerHTML = last.map(m => {
+    var iz = izohlar[m.id] || [];
+    var lastIz = iz.length ? iz[iz.length-1].matn : null;
+    return `<tr>
+      <td><div class="td-name">
+        <div class="avatar">${(m.ism||'?')[0].toUpperCase()}</div>
+        <div><div class="name">${escHtml(m.ism)} ${escHtml(m.familiya||'')}</div></div>
+      </div></td>
+      <td>${badgeHtml(m.holat)}</td>
+      <td>${lastIz ? `<span class="izoh-preview">${escHtml(lastIz)}</span>` : '<span class="izoh-empty">—</span>'}</td>
+      <td style="color:var(--text3);font-size:12px">${m.sana||'—'}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="4" style="text-align:center;padding:24px;color:var(--text3)">Hali mijoz yo\'q</td></tr>';
+}
+
+// ===== HELPERS =====
+function badgeHtml(h) {
+  var cls = h === 'Faol' ? 'badge-green' : h === 'Kutilmoqda' ? 'badge-yellow' : 'badge-red';
+  var dot = '●';
+  return `<span class="badge ${cls}">${dot} ${h||'—'}</span>`;
+}
+function escHtml(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function showToast(msg, isError) {
+  var t = document.getElementById('toast');
+  var ic = document.getElementById('toast-icon');
+  document.getElementById('toast-msg').textContent = msg;
+  ic.className = isError ? 'fas fa-exclamation-circle' : 'fas fa-check-circle';
+  ic.style.color = isError ? 'var(--red)' : 'var(--green)';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function bgClose(e, id) { if (e.target === document.getElementById(id)) { document.getElementById(id).classList.remove('open'); } }
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeModal(); closeIzohModal(); closeConfirm(); }
+});
+
+// ===== INIT =====
+window.addEventListener('DOMContentLoaded', () => {
+  if (localStorage.getItem('crm_auth') === '1') {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    renderTable(); updateDashboard();
+  }
+  var savedUser = localStorage.getItem('crm_username') || DEFAULT_USER;
+  document.getElementById('new-username').value = savedUser;
+});
+</script>
+</body>
+</html>
