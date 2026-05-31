@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CRM — Mijozlar Boshqaruvi</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --accent: #1D9E75;
+    --accent-dark: #085041;
+    --accent-light: #E1F5EE;
+    --bg: #f5f7f6;
+    --bg-card: #ffffff;
+    --bg-sec: #f0f2f1;
+    --text: #1a1a1a;
+    --text-sec: #666;
+    --border: rgba(0,0,0,0.1);
+    --border-hover: rgba(0,0,0,0.2);
+    --radius: 10px;
+    --radius-lg: 14px;
+    --danger: #E24B4A;
+    --info-bg: #E6F1FB;
+    --info-text: #0C447C;
+    --amber-bg: #FAEEDA;
+    --amber-text: #633806;
+    --gray-bg: #F1EFE8;
+    --gray-text: #444441;
+  }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    position: fixed; top: 0; left: 0; bottom: 0;
+    width: 240px; background: var(--bg-card);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    padding: 0; z-index: 100;
+  }
+  .sidebar-logo {
+    padding: 20px 20px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .logo-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: var(--accent); color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .logo-text { font-size: 16px; font-weight: 600; color: var(--text); }
+  .logo-sub { font-size: 11px; color: var(--text-sec); }
+  .sidebar-nav { flex: 1; padding: 12px 10px; }
+  .nav-label {
+    font-size: 10px; font-weight: 600; color: var(--text-sec);
+    text-transform: uppercase; letter-spacing: 0.08em;
+    padding: 0 10px; margin: 16px 0 6px;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 12px; border-radius: 8px;
+    font-size: 14px; color: var(--text-sec);
+    cursor: pointer; transition: all 0.15s;
+    text-decoration: none; margin-bottom: 2px;
+  }
+  .nav-item:hover { background: var(--bg-sec); color: var(--text); }
+  .nav-item.active { background: var(--accent-light); color: var(--accent-dark); font-weight: 500; }
+  .nav-item i { font-size: 18px; }
+  .nav-item .badge {
+    margin-left: auto; background: var(--accent);
+    color: white; font-size: 10px; font-weight: 600;
+    padding: 2px 7px; border-radius: 10px;
+  }
+  .sidebar-footer {
+    padding: 16px 20px;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .user-avatar {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: var(--accent-light); color: var(--accent-dark);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 600;
+  }
+  .user-name { font-size: 13px; font-weight: 500; }
+  .user-role { font-size: 11px; color: var(--text-sec); }
+
+  /* MAIN */
+  .main { margin-left: 240px; padding: 28px; min-height: 100vh; }
+  .page-header {
+    display: flex; align-items: flex-start;
+    justify-content: space-between; margin-bottom: 24px; gap: 12px;
+  }
+  .page-title { font-size: 22px; font-weight: 600; }
+  .page-sub { font-size: 13px; color: var(--text-sec); margin-top: 3px; }
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 10px 20px; background: var(--accent); color: white;
+    border: none; border-radius: var(--radius); font-size: 14px;
+    font-weight: 500; cursor: pointer; transition: background 0.15s;
+    white-space: nowrap;
+  }
+  .btn-primary:hover { background: var(--accent-dark); }
+  .btn-primary i { font-size: 17px; }
+
+  /* STATS */
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+  .stat-card {
+    background: var(--bg-card); border-radius: var(--radius-lg);
+    border: 1px solid var(--border); padding: 18px 20px;
+  }
+  .stat-icon {
+    width: 38px; height: 38px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 19px; margin-bottom: 12px;
+  }
+  .stat-label { font-size: 12px; color: var(--text-sec); margin-bottom: 4px; }
+  .stat-val { font-size: 26px; font-weight: 600; }
+  .stat-trend { font-size: 12px; color: var(--accent); margin-top: 4px; }
+
+  /* TOOLBAR */
+  .toolbar {
+    display: flex; gap: 10px; align-items: center;
+    margin-bottom: 16px; flex-wrap: wrap;
+  }
+  .search-wrap {
+    flex: 1; min-width: 200px; position: relative;
+  }
+  .search-wrap i {
+    position: absolute; left: 11px; top: 50%; transform: translateY(-50%);
+    font-size: 16px; color: var(--text-sec); pointer-events: none;
+  }
+  .search-wrap input { padding-left: 36px !important; }
+  input[type=text], input[type=tel], input[type=email], select, textarea {
+    width: 100%; padding: 9px 13px;
+    border: 1px solid var(--border); border-radius: var(--radius);
+    font-size: 14px; color: var(--text); background: var(--bg-card);
+    font-family: inherit; outline: none; transition: border 0.15s;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(29,158,117,0.15); }
+  select { cursor: pointer; }
+  textarea { resize: vertical; }
+  .filter-select { min-width: 160px; }
+
+  /* TABLE */
+  .table-card {
+    background: var(--bg-card); border-radius: var(--radius-lg);
+    border: 1px solid var(--border); overflow: hidden;
+  }
+  .table-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 20px; border-bottom: 1px solid var(--border);
+  }
+  .table-title { font-size: 14px; font-weight: 500; }
+  .table-count {
+    font-size: 12px; color: var(--text-sec);
+    background: var(--bg-sec); padding: 3px 10px; border-radius: 10px;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  thead tr { background: var(--bg-sec); }
+  th {
+    padding: 11px 16px; text-align: left; font-size: 11px;
+    font-weight: 600; color: var(--text-sec);
+    text-transform: uppercase; letter-spacing: 0.06em;
+    border-bottom: 1px solid var(--border);
+  }
+  td { padding: 13px 16px; border-bottom: 1px solid var(--border); font-size: 14px; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: rgba(29,158,117,0.03); }
+  .name-cell { display: flex; align-items: center; gap: 10px; }
+  .avatar {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: var(--accent-light); color: var(--accent-dark);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 600; flex-shrink: 0;
+  }
+  .client-name { font-weight: 500; font-size: 14px; }
+  .client-note { font-size: 11px; color: var(--text-sec); margin-top: 1px; }
+  .phone-text { font-family: 'Courier New', monospace; font-size: 13px; }
+
+  /* BADGES */
+  .badge {
+    display: inline-flex; align-items: center;
+    padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 500;
+  }
+  .badge-savdo { background: var(--accent-light); color: var(--accent-dark); }
+  .badge-xizmat { background: var(--info-bg); color: var(--info-text); }
+  .badge-ishlab { background: var(--amber-bg); color: var(--amber-text); }
+  .badge-boshqa { background: var(--gray-bg); color: var(--gray-text); }
+
+  /* ROW STATUS */
+  .status-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    display: inline-block; margin-right: 5px;
+  }
+  .dot-active { background: var(--accent); }
+  .dot-passive { background: #ccc; }
+
+  /* ACTIONS */
+  .actions { display: flex; gap: 6px; }
+  .btn-icon {
+    background: none; border: 1px solid var(--border);
+    border-radius: 7px; padding: 6px 9px; cursor: pointer;
+    color: var(--text-sec); font-size: 15px; transition: all 0.1s;
+    display: flex; align-items: center;
+  }
+  .btn-icon:hover { background: var(--bg-sec); border-color: var(--border-hover); color: var(--text); }
+  .btn-icon.danger:hover { background: #fff0f0; border-color: var(--danger); color: var(--danger); }
+
+  /* EMPTY */
+  .empty-state {
+    text-align: center; padding: 4rem 2rem;
+    color: var(--text-sec);
+  }
+  .empty-state i { font-size: 40px; opacity: 0.2; display: block; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.45);
+    display: none; align-items: center; justify-content: center;
+    z-index: 1000; padding: 20px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--bg-card); border-radius: var(--radius-lg);
+    width: 100%; max-width: 460px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+    overflow: hidden;
+  }
+  .modal-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 22px; border-bottom: 1px solid var(--border);
+  }
+  .modal-head-title { font-size: 16px; font-weight: 600; }
+  .btn-close {
+    background: none; border: none; cursor: pointer;
+    color: var(--text-sec); font-size: 20px; padding: 2px;
+    border-radius: 6px; display: flex; align-items: center;
+    transition: all 0.1s;
+  }
+  .btn-close:hover { background: var(--bg-sec); color: var(--text); }
+  .modal-body { padding: 22px; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-full { grid-column: 1 / -1; }
+  .field label {
+    display: block; font-size: 12px; font-weight: 600;
+    color: var(--text-sec); margin-bottom: 6px; text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .required { color: var(--danger); }
+  .modal-foot {
+    display: flex; gap: 10px; justify-content: flex-end;
+    padding: 16px 22px; border-top: 1px solid var(--border);
+    background: var(--bg-sec);
+  }
+  .btn-cancel {
+    padding: 9px 20px; background: none; border: 1px solid var(--border);
+    border-radius: var(--radius); font-size: 14px; cursor: pointer;
+    color: var(--text-sec); font-family: inherit; transition: all 0.1s;
+  }
+  .btn-cancel:hover { background: var(--bg-card); border-color: var(--border-hover); }
+  .btn-save {
+    padding: 9px 24px; background: var(--accent); color: white;
+    border: none; border-radius: var(--radius); font-size: 14px;
+    font-weight: 500; cursor: pointer; font-family: inherit;
+    transition: background 0.15s;
+  }
+  .btn-save:hover { background: var(--accent-dark); }
+
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--text); color: white;
+    padding: 12px 18px; border-radius: var(--radius);
+    font-size: 14px; display: flex; align-items: center; gap: 8px;
+    z-index: 2000; transform: translateY(80px); opacity: 0;
+    transition: all 0.25s ease; pointer-events: none;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast i { font-size: 17px; }
+
+  /* DELETE CONFIRM MODAL */
+  .confirm-modal {
+    background: var(--bg-card); border-radius: var(--radius-lg);
+    width: 100%; max-width: 360px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+    padding: 28px 24px; text-align: center;
+  }
+  .confirm-icon {
+    width: 52px; height: 52px; border-radius: 50%;
+    background: #fff0f0; color: var(--danger);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; margin: 0 auto 16px;
+  }
+  .confirm-title { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+  .confirm-sub { font-size: 13px; color: var(--text-sec); margin-bottom: 20px; line-height: 1.5; }
+  .confirm-btns { display: flex; gap: 10px; justify-content: center; }
+  .btn-danger {
+    padding: 9px 22px; background: var(--danger); color: white;
+    border: none; border-radius: var(--radius); font-size: 14px;
+    font-weight: 500; cursor: pointer; font-family: inherit;
+  }
+  .btn-danger:hover { background: #c0392b; }
+
+  /* RESPONSIVE */
+  @media (max-width: 900px) {
+    .sidebar { display: none; }
+    .main { margin-left: 0; padding: 16px; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .form-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 600px) {
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .toolbar { flex-direction: column; align-items: stretch; }
+    .filter-select { width: 100%; }
+    th:nth-child(5), td:nth-child(5) { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon"><i class="ti ti-building-store"></i></div>
+    <div>
+      <div class="logo-text">MyCRM</div>
+      <div class="logo-sub">Boshqaruv tizimi</div>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-label">Asosiy</div>
+    <a class="nav-item active" onclick="return false;" href="#">
+      <i class="ti ti-users"></i> Mijozlar
+      <span class="badge" id="nav-count">0</span>
+    </a>
+    <a class="nav-item" onclick="showInfo('dashboard')" href="#">
+      <i class="ti ti-chart-bar"></i> Statistika
+    </a>
+    <a class="nav-item" onclick="showInfo('calendar')" href="#">
+      <i class="ti ti-calendar"></i> Jadval
+    </a>
+
+    <div class="nav-label">Sozlamalar</div>
+    <a class="nav-item" onclick="showInfo('settings')" href="#">
+      <i class="ti ti-settings"></i> Sozlamalar
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-avatar">AD</div>
+    <div>
+      <div class="user-name">Admin</div>
+      <div class="user-role">Superadmin</div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Mijozlar boshqaruvi</div>
+      <div class="page-sub">Barcha mijozlarni bu yerdan kuzating va boshqaring</div>
+    </div>
+    <button class="btn-primary" onclick="openModal()">
+      <i class="ti ti-plus"></i> Yangi mijoz
+    </button>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#E1F5EE;color:#1D9E75;"><i class="ti ti-users"></i></div>
+      <div class="stat-label">Jami mijozlar</div>
+      <div class="stat-val" id="st-total">0</div>
+      <div class="stat-trend">Faol bazada</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#E6F1FB;color:#185FA5;"><i class="ti ti-shopping-cart"></i></div>
+      <div class="stat-label">Savdo</div>
+      <div class="stat-val" id="st-savdo">0</div>
+      <div class="stat-trend">Savdo sohasi</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#FAEEDA;color:#854F0B;"><i class="ti ti-tool"></i></div>
+      <div class="stat-label">Xizmat ko'rsatish</div>
+      <div class="stat-val" id="st-xizmat">0</div>
+      <div class="stat-trend">Xizmat sohasi</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#FBEAF0;color:#993556;"><i class="ti ti-building-factory"></i></div>
+      <div class="stat-label">Ishlab chiqarish</div>
+      <div class="stat-val" id="st-ishlab">0</div>
+      <div class="stat-trend">Ishlab chiqarish</div>
+    </div>
+  </div>
+
+  <!-- TOOLBAR -->
+  <div class="toolbar">
+    <div class="search-wrap">
+      <i class="ti ti-search"></i>
+      <input type="text" id="search-inp" placeholder="Ism yoki telefon bo'yicha qidirish..." oninput="renderTable()"/>
+    </div>
+    <select class="filter-select" id="filter-type" onchange="renderTable()">
+      <option value="">Barcha turlar</option>
+      <option>Savdo</option>
+      <option>Xizmat</option>
+      <option>Ishlab chiqarish</option>
+      <option>Boshqa</option>
+    </select>
+    <select class="filter-select" id="filter-status" onchange="renderTable()">
+      <option value="">Barcha holat</option>
+      <option value="faol">Faol</option>
+      <option value="passiv">Passiv</option>
+    </select>
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-card">
+    <div class="table-header">
+      <div class="table-title">Mijozlar ro'yxati</div>
+      <div class="table-count" id="table-count">0 ta</div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th style="width:42px;">#</th>
+          <th>Mijoz ismi</th>
+          <th>Telefon raqami</th>
+          <th>Faoliyat turi</th>
+          <th>Holat</th>
+          <th style="width:100px;">Amallar</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+</main>
+
+<!-- ADD/EDIT MODAL -->
+<div class="modal-overlay" id="modal-overlay" onclick="bgClose(event, 'modal-overlay')">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-head-title" id="modal-title">Yangi mijoz qo'shish</div>
+      <button class="btn-close" onclick="closeModal()"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="field">
+          <label>Mijoz ismi <span class="required">*</span></label>
+          <input type="text" id="f-name" placeholder="To'liq ism sharif"/>
+        </div>
+        <div class="field">
+          <label>Telefon raqami <span class="required">*</span></label>
+          <input type="tel" id="f-phone" placeholder="+998 90 123 45 67"/>
+        </div>
+        <div class="field">
+          <label>Faoliyat turi <span class="required">*</span></label>
+          <select id="f-type">
+            <option value="">— tanlang —</option>
+            <option>Savdo</option>
+            <option>Xizmat</option>
+            <option>Ishlab chiqarish</option>
+            <option>Boshqa</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Holat</label>
+          <select id="f-status">
+            <option value="faol">Faol</option>
+            <option value="passiv">Passiv</option>
+          </select>
+        </div>
+        <div class="field form-full">
+          <label>Manzil</label>
+          <input type="text" id="f-address" placeholder="Shahar, tuman..."/>
+        </div>
+        <div class="field form-full">
+          <label>Izoh</label>
+          <textarea id="f-note" rows="2" placeholder="Qo'shimcha ma'lumot..."></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-cancel" onclick="closeModal()">Bekor qilish</button>
+      <button class="btn-save" onclick="saveMijoz()"><i class="ti ti-check" style="font-size:15px;vertical-align:-2px;margin-right:4px"></i>Saqlash</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE CONFIRM MODAL -->
+<div class="modal-overlay" id="confirm-overlay" onclick="bgClose(event,'confirm-overlay')">
+  <div class="confirm-modal">
+    <div class="confirm-icon"><i class="ti ti-trash"></i></div>
+    <div class="confirm-title">Mijozni o'chirishni tasdiqlaysizmi?</div>
+    <div class="confirm-sub" id="confirm-text">Bu amalni ortga qaytarib bo'lmaydi.</div>
+    <div class="confirm-btns">
+      <button class="btn-cancel" onclick="closeConfirm()">Bekor qilish</button>
+      <button class="btn-danger" onclick="confirmDelete()">O'chirish</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"><i class="ti ti-check-circle"></i><span id="toast-msg"></span></div>
+
+<script>
+var clients = [];
+var editId = null;
+var deleteId = null;
+var uid = 1;
+
+// Demo data
+(function(){
+  var demo = [
+    {id:uid++,name:"Alisher Karimov",phone:"+998 90 123 45 67",type:"Savdo",status:"faol",address:"Toshkent, Yunusobod",note:"VIP mijoz"},
+    {id:uid++,name:"Nodira Umarova",phone:"+998 93 456 78 90",type:"Xizmat",status:"faol",address:"Toshkent, Chilonzor",note:""},
+    {id:uid++,name:"Bobur Toshmatov",phone:"+998 99 321 54 76",type:"Ishlab chiqarish",status:"faol",address:"Samarqand",note:""},
+    {id:uid++,name:"Dilnoza Yusupova",phone:"+998 91 234 56 78",type:"Savdo",status:"passiv",address:"Farg'ona",note:""},
+    {id:uid++,name:"Sardor Mirzayev",phone:"+998 97 876 54 32",type:"Xizmat",status:"faol",address:"Namangan",note:"Yangi mijoz"},
+  ];
+  clients = demo;
+  renderTable();
+  updateStats();
+})();
+
+function getInitials(n){
+  var p = n.trim().split(' ');
+  return p.length > 1 ? p[0][0]+p[1][0] : n.slice(0,2).toUpperCase();
+}
+
+function badgeClass(t){
+  if(t==='Savdo') return 'badge-savdo';
+  if(t==='Xizmat') return 'badge-xizmat';
+  if(t==='Ishlab chiqarish') return 'badge-ishlab';
+  return 'badge-boshqa';
+}
+
+function esc(s){ var d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; }
+
+function renderTable(){
+  var q = (document.getElementById('search-inp').value||'').toLowerCase();
+  var ft = document.getElementById('filter-type').value;
+  var fs = document.getElementById('filter-status').value;
+  var list = clients.filter(function(c){
+    var m = !q || c.name.toLowerCase().includes(q) || c.phone.includes(q);
+    var f = !ft || c.type === ft;
+    var s = !fs || c.status === fs;
+    return m && f && s;
+  });
+  document.getElementById('table-count').textContent = list.length + ' ta';
+  var tb = document.getElementById('tbody');
+  if(list.length === 0){
+    tb.innerHTML = '<tr><td colspan="6"><div class="empty-state"><i class="ti ti-users"></i><p>Mijozlar topilmadi</p></div></td></tr>';
+    return;
+  }
+  tb.innerHTML = list.map(function(c, i){
+    var statusDot = '<span class="status-dot '+(c.status==='faol'?'dot-active':'dot-passive')+'"></span>';
+    var statusText = c.status==='faol' ? 'Faol' : 'Passiv';
+    return '<tr>'
+      +'<td style="color:var(--text-sec);font-size:12px;font-weight:500;">'+(i+1)+'</td>'
+      +'<td><div class="name-cell"><div class="avatar">'+getInitials(c.name)+'</div>'
+      +'<div><div class="client-name">'+esc(c.name)+'</div>'
+      +(c.address?'<div class="client-note"><i class="ti ti-map-pin" style="font-size:11px"></i> '+esc(c.address)+'</div>':'')
+      +'</div></div></td>'
+      +'<td><span class="phone-text">'+esc(c.phone)+'</span></td>'
+      +'<td><span class="badge '+badgeClass(c.type)+'">'+esc(c.type)+'</span></td>'
+      +'<td style="font-size:13px;">'+statusDot+statusText+'</td>'
+      +'<td><div class="actions">'
+      +'<button class="btn-icon" onclick="editMijoz('+c.id+')" title="Tahrirlash"><i class="ti ti-edit"></i></button>'
+      +'<button class="btn-icon danger" onclick="askDelete('+c.id+')" title="O\'chirish"><i class="ti ti-trash"></i></button>'
+      +'</div></td>'
+      +'</tr>';
+  }).join('');
+}
+
+function updateStats(){
+  var t = clients.length;
+  document.getElementById('st-total').textContent = t;
+  document.getElementById('st-savdo').textContent = clients.filter(function(c){return c.type==='Savdo';}).length;
+  document.getElementById('st-xizmat').textContent = clients.filter(function(c){return c.type==='Xizmat';}).length;
+  document.getElementById('st-ishlab').textContent = clients.filter(function(c){return c.type==='Ishlab chiqarish';}).length;
+  document.getElementById('nav-count').textContent = t;
+}
+
+function openModal(id){
+  editId = id || null;
+  if(id){
+    var c = clients.find(function(x){return x.id===id;});
+    if(!c) return;
+    document.getElementById('modal-title').textContent = 'Mijozni tahrirlash';
+    document.getElementById('f-name').value = c.name;
+    document.getElementById('f-phone').value = c.phone;
+    document.getElementById('f-type').value = c.type;
+    document.getElementById('f-status').value = c.status || 'faol';
+    document.getElementById('f-address').value = c.address || '';
+    document.getElementById('f-note').value = c.note || '';
+  } else {
+    document.getElementById('modal-title').textContent = "Yangi mijoz qo'shish";
+    document.getElementById('f-name').value = '';
+    document.getElementById('f-phone').value = '';
+    document.getElementById('f-type').value = '';
+    document.getElementById('f-status').value = 'faol';
+    document.getElementById('f-address').value = '';
+    document.getElementById('f-note').value = '';
+  }
+  document.getElementById('modal-overlay').classList.add('open');
+  setTimeout(function(){ document.getElementById('f-name').focus(); }, 80);
+}
+
+function closeModal(){ document.getElementById('modal-overlay').classList.remove('open'); }
+
+function editMijoz(id){ openModal(id); }
+
+function askDelete(id){
+  deleteId = id;
+  var c = clients.find(function(x){return x.id===id;});
+  if(c) document.getElementById('confirm-text').textContent = '"'+c.name+'" mijozi o\'chiriladi. Bu amalni ortga qaytarib bo\'lmaydi.';
+  document.getElementById('confirm-overlay').classList.add('open');
+}
+
+function closeConfirm(){ document.getElementById('confirm-overlay').classList.remove('open'); deleteId=null; }
+
+function confirmDelete(){
+  if(!deleteId) return;
+  clients = clients.filter(function(x){return x.id!==deleteId;});
+  closeConfirm();
+  renderTable();
+  updateStats();
+  showToast('Mijoz o\'chirildi', '#E24B4A');
+}
+
+function saveMijoz(){
+  var name = document.getElementById('f-name').value.trim();
+  var phone = document.getElementById('f-phone').value.trim();
+  var type = document.getElementById('f-type').value;
+  var status = document.getElementById('f-status').value;
+  var address = document.getElementById('f-address').value.trim();
+  var note = document.getElementById('f-note').value.trim();
+  if(!name || !phone || !type){
+    showToast("Iltimos, barcha majburiy (*) maydonlarni to'ldiring!", '#E24B4A');
+    return;
+  }
+  if(editId){
+    var c = clients.find(function(x){return x.id===editId;});
+    if(c){ c.name=name; c.phone=phone; c.type=type; c.status=status; c.address=address; c.note=note; }
+    showToast("Mijoz ma'lumotlari yangilandi");
+  } else {
+    clients.push({id:uid++, name:name, phone:phone, type:type, status:status, address:address, note:note});
+    showToast("Yangi mijoz qo'shildi");
+  }
+  closeModal();
+  renderTable();
+  updateStats();
+}
+
+function bgClose(e, id){ if(e.target === document.getElementById(id)) document.getElementById(id).classList.remove('open'); }
+
+function showToast(msg, bg){
+  var t = document.getElementById('toast');
+  var icon = t.querySelector('i');
+  document.getElementById('toast-msg').textContent = msg;
+  t.style.background = bg || '#1D9E75';
+  icon.className = bg ? 'ti ti-alert-circle' : 'ti ti-check-circle';
+  t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 3000);
+}
+
+function showInfo(page){
+  var msgs = {
+    dashboard: "Statistika sahifasi tez orada qo'shiladi!",
+    calendar: "Jadval sahifasi tez orada qo'shiladi!",
+    settings: "Sozlamalar sahifasi tez orada qo'shiladi!"
+  };
+  showToast(msgs[page] || "Tez orada...", '#378ADD');
+}
+
+document.addEventListener('keydown', function(e){
+  if(e.key === 'Escape'){
+    closeModal();
+    closeConfirm();
+  }
+});
+</script>
+</body>
+</html>
